@@ -1,6 +1,6 @@
 # bookletmaker
 
-<!-- Generate the readme for the PDF2Booklet, keep it simple and short -->
+
 This is a simple tool to convert a PDF into a booklet format, ready for printing.
 
 ## Usage
@@ -16,8 +16,13 @@ This is a simple tool to convert a PDF into a booklet format, ready for printing
 *   Supports common PDF sizes.
 
 ## Safety
+
 *   All PDF processing is performed directly within your web browser. Your PDF files never leave your computer and are not uploaded to any servers.
+
+## Know Issues
+
+*   Encrypted PDFs are not supported and may cause errors.
 
 ## Installation
 
-No installation required. Simply download the executable and run it, or use the already hosted on Github Pages.
+*   No installation required. Simply download the executable and run it, or use the already hosted on Github Pages.
