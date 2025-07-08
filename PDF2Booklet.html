@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF2Booklet</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      margin: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 98vw;
+      min-height: 90vh;
+      overflow: hidden;
+    }
+    #progressContainer { display: none; margin-top: 1rem; }
+    #progressText { margin-top: 0.5rem; font-weight: 500; }
+    #fileName { font-weight: 500; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-center mb-4"><i class="fas fa-book-open"></i> PDF2Booklet</h2>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="fas fa-file-pdf me-2"></i>Select PDF File:</label>
+        <input class="form-control" type="file" id="fileInput" accept="application/pdf"/>
+        <div id="fileName" class="mt-1 text-secondary"></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label"><i class="fas fa-key me-2"></i>Password (if protected):</label>
+        <input class="form-control" type="password" id="passwordInput" placeholder="PDF password (optional)"/>
+      </div>
+
+      <button id="generateBtn" class="btn btn-primary w-100">
+        <i class="fas fa-print me-2"></i>Generate Booklet
+      </button>
+
+      <button id="viewPdfBtn" class="btn btn-outline-secondary w-100 mt-2 d-none">
+        <i class="fas fa-eye me-2"></i>View Generated PDF
+      </button>
+
+      <div id="progressContainer" class="progress mt-3">
+        <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
+      </div>
+      <div id="progressText" class="text-center text-muted"></div>
+
+      <div id="errorMsg" class="text-danger mt-3"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    const A4 = { height: 595.28, width: 841.89 };
+    let generatedPdfURL = null;
+
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('fileName');
+    fileInput.addEventListener('change', () => {
+      fileNameDisplay.textContent = fileInput.files[0]?.name || '';
+    });
+
+    function updateProgress(percent, text) {
+      const bar = document.getElementById('progressBar');
+      const container = document.getElementById('progressContainer');
+      const progressText = document.getElementById('progressText');
+      container.style.display = 'block';
+      bar.style.width = percent + '%';
+      bar.setAttribute('aria-valuenow', percent);
+      progressText.textContent = text;
+    }
+
+    function resetProgress() {
+      document.getElementById('progressContainer').style.display = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('progressText').textContent = '';
+    }
+
+    function hideViewButton() {
+      const btn = document.getElementById('viewPdfBtn');
+      btn.classList.add('d-none');
+      btn.onclick = null;
+      if (generatedPdfURL) {
+        URL.revokeObjectURL(generatedPdfURL);
+        generatedPdfURL = null;
+      }
+    }
+
+    async function drawTwoPages(imposedPdf, srcPdf, indexA, indexB) {
+      const page = imposedPdf.addPage([A4.height * 2, A4.width]);
+      if (indexA !== null) {
+        const [p] = await srcPdf.copyPages(srcPdf, [indexA]);
+        const emb = await imposedPdf.embedPage(p);
+        page.drawPage(emb, { x: 0, y: 0, width: A4.height, height: A4.width });
+      }
+      if (indexB !== null) {
+        const [p] = await srcPdf.copyPages(srcPdf, [indexB]);
+        const emb = await imposedPdf.embedPage(p);
+        page.drawPage(emb, { x: A4.height, y: 0, width: A4.height, height: A4.width });
+      }
+    }
+
+    async function generateBooklet(inputBytes, password) {
+      updateProgress(5, '🔐 Loading PDF...');
+      const srcPdf = await PDFLib.PDFDocument.load(inputBytes, {
+        ignoreEncryption: true,
+        password: password || undefined
+      });
+
+      const original = srcPdf.getPageCount();
+      const toAdd = (4 - (original % 4)) % 4;
+      const total = original + toAdd;
+      const imposedPdf = await PDFLib.PDFDocument.create();
+
+      for (let i = 0; i < total / 4; i++) {
+        const safe = idx => (idx >= original ? null : idx);
+        updateProgress(10 + Math.floor((i / (total / 4)) * 80), `📄 Processing sheet ${i + 1} of ${total / 4}...`);
+        const l1 = total - 1 - 2 * i, r1 = 2 * i;
+        const l2 = 2 * i + 1, r2 = total - 2 - 2 * i;
+        await drawTwoPages(imposedPdf, srcPdf, safe(l1), safe(r1));
+        await drawTwoPages(imposedPdf, srcPdf, safe(l2), safe(r2));
+        await new Promise(r => setTimeout(r, 50)); // simulate delay
+      }
+
+      updateProgress(95, '💾 Generating output...');
+      const pdfBytes = await imposedPdf.save();
+      updateProgress(100, '✅ Done! Opening download...');
+
+      return pdfBytes;
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      resetProgress();
+      hideViewButton();
+      document.getElementById('errorMsg').textContent = '';
+      if (!fileInput.files.length) return;
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const bytes = new Uint8Array(reader.result);
+          const pw = document.getElementById('passwordInput').value.trim();
+          const res = await generateBooklet(bytes, pw);
+          const blob = new Blob([res], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          generatedPdfURL = url;
+
+          // ⬇️ Simulated download
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileInput.files[0].name.replace(/\.pdf$/i, '-booklet.pdf');
+          document.body.appendChild(a); a.click(); a.remove();
+
+          // 🧭 Open in new tab
+          const tab = window.open(url, '_blank');
+          if (tab) {
+            tab.document.title = fileInput.files[0].name.replace(/\.pdf$/i, '-booklet.pdf');
+          }
+
+          // 👁️ Show "View PDF" button
+          const viewBtn = document.getElementById('viewPdfBtn');
+          viewBtn.classList.remove('d-none');
+          viewBtn.onclick = () => window.open(generatedPdfURL, '_blank');
+        } catch (err) {
+          console.error(err);
+          document.getElementById('errorMsg').textContent = '❌ ' + (err.message || err);
+          resetProgress();
+        }
+      };
+      reader.readAsArrayBuffer(fileInput.files[0]);
+    });
+  </script>
+</body>
+</html>
