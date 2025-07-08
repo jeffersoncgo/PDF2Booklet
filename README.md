@@ -1,28 +1,28 @@
-# bookletmaker
+# PDF2Booklet
 
-
-This is a simple tool to convert a PDF into a booklet format, ready for printing.
-
-## Usage
-
-1.  **Select your PDF:** Click the "Browse" button to choose the PDF file you want to convert.
-2.  **Choose Output Folder:** Click the "Browse" button next to "Output Folder" to select where you want to save the converted PDF.
-3.  **Convert:** Click the "Convert" button. The tool will process your PDF and save the booklet-formatted version in the specified output folder.
+PDF2Booklet is a simple, client-side web application designed to help you create booklets from your PDF files. It runs entirely in your browser, meaning no server-side processing is involved, ensuring your documents remain private.
 
 ## Features
 
-*   Converts standard PDFs into a printable booklet format.
-*   User-friendly interface.
-*   Supports common PDF sizes.
+*   **Client-Side Processing:** All operations are performed directly in your browser using JavaScript, ensuring your PDF files are never uploaded to a server.
+*   **Easy to Use:** A straightforward interface allows you to quickly convert your PDFs into a booklet-friendly format.
+*   **Lightweight:** Consists only of `index.html`, `style.css`, and `script.js`, making it easy to host or run locally.
 
-## Safety
+## How to Use
 
-*   All PDF processing is performed directly within your web browser. Your PDF files never leave your computer and are not uploaded to any servers.
+1.  **Open `index.html`:** Simply open the `index.html` file in your web browser.
+2.  **Select Your PDF:** Click the "Choose File" button and select the PDF you wish to convert into a booklet.
+3.  **Generate Booklet:** Follow the on-screen instructions to configure your booklet (e.g., page order, duplex printing options).
+4.  **Print:** The application will prepare your PDF for printing as a booklet. You can then use your browser's print function to print the generated output.
 
-## Know Issues
+## Development
 
-*   Encrypted PDFs are not supported and may cause errors.
+This project is designed to be simple and self-contained. If you wish to contribute or modify it:
 
-## Installation
+1.  Clone this repository (or download the files).
+2.  Make your changes to `index.html`, `style.css`, or `script.js`.
+3.  Open `index.html` in your browser to test your changes.
 
-*   No installation required. Simply download the executable and run it, or use the already hosted on Github Pages.
+## License
+
+This project is open-source and available under the [MIT License](LICENSE).

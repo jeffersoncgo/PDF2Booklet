@@ -1,0 +1,26 @@
+    body {
+      margin: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 90vh;
+    }
+
+    #progressContainer {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    #progressText {
+      margin-top: 0.5rem;
+      font-weight: 500;
+    }
+
+    #fileName {
+      font-weight: 500;
+    }
+
+    #viewBtn,
+    #printInstructions {
+      display: none;
+    }
